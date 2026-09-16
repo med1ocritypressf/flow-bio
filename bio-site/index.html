@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="black">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>flow — bio</title>
+  <meta name="description" content="flow — все мои ссылки в одном месте." />
+  <meta name="theme-color" content="#000000" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="flow — bio" />
+  <meta property="og:description" content="Все мои соцсети и контакты в одном месте." />
+  <meta property="og:image" content="assets/avatar.jpg" />
+  <link rel="icon" href="assets/avatar.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- ФОН -->
+  <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow--top" aria-hidden="true"></div>
+  <div class="bg-glow bg-glow--bottom" aria-hidden="true"></div>
+  <div class="bg-noise" aria-hidden="true"></div>
+  <div class="bg-vignette" aria-hidden="true"></div>
+
+  <!-- ВХОД -->
+  <div class="enter" id="enter">
+    <div class="enter__inner">
+      <div class="enter__pulse"></div>
+      <div class="enter__tag">[ click to enter ]</div>
+      <div class="enter__title" id="enterName">flow</div>
+      <div class="enter__hint">нажми чтобы войти</div>
+    </div>
+  </div>
+
+  <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+  <header class="topbar">
+    <div class="topbar__left">
+      <span class="dot"></span>
+      <span class="topbar__user" id="topbarName">@flow</span>
+      <span class="topbar__views"><span id="views">0</span> views</span>
+    </div>
+    <div class="topbar__right">
+      <button class="pill-btn" id="shareBtn" type="button" aria-label="Поделиться">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M18 16.08a2.9 2.9 0 00-1.96.77L8.9 12.7c.05-.23.08-.46.08-.7s-.03-.47-.08-.7l7.05-4.11c.52.48 1.2.78 1.95.78a2.92 2.92 0 100-5.84 2.92 2.92 0 00-2.92 2.92c0 .24.03.47.08.7L8.04 9.76A2.9 2.9 0 006.08 9a2.92 2.92 0 100 5.84c.75 0 1.44-.3 1.96-.78l7.05 4.12c-.05.21-.08.43-.08.66A2.85 2.85 0 1018 16.08z"/></svg>
+        <span>share</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- КАРТОЧКА -->
+  <main class="wrap">
+    <section class="card" id="card">
+      <div class="card__shine" aria-hidden="true"></div>
+
+      <div class="avatar-wrap">
+        <div class="avatar-ring" aria-hidden="true"></div>
+        <img class="avatar" id="avatar" alt="Аватар flow" width="128" height="128" />
+        <div class="avatar avatar--fallback" id="avatarFallback" hidden>f</div>
+        <span class="status" title="online"><span class="status__dot"></span></span>
+      </div>
+
+      <h1 class="name">
+        <span id="name">flow</span>
+        <svg class="verified" id="verified" viewBox="0 0 24 24" aria-label="verified">
+          <path fill="currentColor" d="M12 1.8l2.5 2.2 3.3-.4 1.2 3.1 3 1.4-.8 3.2 2 2.6-2.4 2.3.2 3.3-3.3.5-1.8 2.7L12 21.6l-3.1 1.4-1.8-2.7-3.3-.5.2-3.3-2.4-2.3 2-2.6-.8-3.2 3-1.4 1.2-3.1 3.3.4L12 1.8z"/>
+          <path fill="#000" d="M10.6 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.2-4.2 1.4 1.4-5.6 5.6z"/>
+        </svg>
+      </h1>
+      <div class="uid" id="uid">uid: 1</div>
+
+      <p class="typed"><span class="typed__prefix">></span> <span id="typed"></span><span class="caret" aria-hidden="true"></span></p>
+      <p class="bio" id="bio"></p>
+
+      <div class="badges" id="badges"></div>
+
+      <a class="playlist" id="playlist" href="https://open.spotify.com/playlist/3fHogffLyJuA23QfNfzYrF" target="_blank" rel="noopener">
+        <div class="playlist__art">
+          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#1db954" d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.6 14.4a.6.6 0 01-.8.2c-2.3-1.4-5.1-1.7-8.5-.9a.6.6 0 11-.3-1.2c3.7-.9 6.9-.5 9.4 1.1.3.2.4.6.2.8zm1.2-2.7a.8.8 0 01-1 .3c-2.6-1.6-6.5-2-9.5-1.1a.8.8 0 11-.5-1.5c3.4-1 7.7-.6 10.7 1.2.3.2.4.7.3 1.1zm.1-2.9C14.7 8.9 9.3 8.7 6 9.7a1 1 0 11-.6-1.9c3.8-1.1 9.7-.9 13.5 1.3a1 1 0 01-1 1.7z"/></svg>
+        </div>
+        <div class="playlist__info">
+          <div class="playlist__title">Spotify playlist</div>
+          <div class="playlist__name" id="playlistName">Мой плейлист</div>
+          <div class="playlist__meta" id="playlistMeta">мой вайб</div>
+        </div>
+        <span class="playlist__go" id="playlistToggle">
+          <svg id="icoOpen" viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M8 5.5v13l11-6.5-11-6.5z"/></svg>
+          <svg id="icoClose" viewBox="0 0 24 24" width="18" height="18" style="display:none"><path fill="currentColor" d="M12 8l-6 6 1.4 1.4L12 10.8l4.6 4.6L18 14l-6-6z"/></svg>
+        </span>
+      </a>
+      <div class="embed" id="embedWrap" hidden>
+        <div class="embed__bar">
+          <span>сейчас играет</span>
+          <span class="embed__actions">
+            <a id="playlistExt" href="https://open.spotify.com/playlist/3fHogffLyJuA23QfNfzYrF" target="_blank" rel="noopener">открыть в Spotify</a>
+            <button id="embedHide" type="button">скрыть</button>
+          </span>
+        </div>
+        <iframe id="spotifyFrame" title="Spotify playlist" width="100%" height="352" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+      </div>
+
+      <div class="divider"><span>links</span></div>
+
+      <nav class="links" id="links" aria-label="Мои ссылки"></nav>
+
+      <div class="socials" id="socials"></div>
+
+      <footer class="footer" id="footer"></footer>
+    </section>
+    <p class="made">made by <b>flow</b> — black theme</p>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <audio id="bgMusic" loop preload="none"></audio>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
