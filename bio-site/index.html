@@ -13,17 +13,18 @@
   <link rel="icon" href="assets/avatar.jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Unbounded:wght@500;700;800&display=swap" rel="stylesheet" />
+  <script>document.documentElement.classList.add("js");</script>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!-- ФОН -->
   <canvas id="stars" aria-hidden="true"></canvas>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="bg-grid" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow--top" aria-hidden="true"></div>
-  <div class="bg-glow bg-glow--bottom" aria-hidden="true"></div>
   <div class="bg-noise" aria-hidden="true"></div>
   <div class="bg-vignette" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursorGlow" aria-hidden="true"></div>
 
   <!-- ВХОД -->
   <div class="enter" id="enter">
@@ -32,6 +33,7 @@
       <div class="enter__tag">[ click to enter ]</div>
       <div class="enter__title" id="enterName">flow</div>
       <div class="enter__hint">нажми чтобы войти</div>
+      <button class="enter__btn" type="button">enter</button>
     </div>
   </div>
 
@@ -59,14 +61,14 @@
         <div class="avatar-ring" aria-hidden="true"></div>
         <img class="avatar" id="avatar" alt="Аватар flow" width="128" height="128" />
         <div class="avatar avatar--fallback" id="avatarFallback" hidden>f</div>
-        <span class="status" title="online"><span class="status__dot"></span></span>
       </div>
 
       <h1 class="name">
         <span id="name">flow</span>
         <svg class="verified" id="verified" viewBox="0 0 24 24" aria-label="verified">
+          <defs><linearGradient id="vgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8b5cf6"/><stop offset=".5" stop-color="#ec4899"/><stop offset="1" stop-color="#ff7a33"/></linearGradient></defs>
           <path fill="currentColor" d="M12 1.8l2.5 2.2 3.3-.4 1.2 3.1 3 1.4-.8 3.2 2 2.6-2.4 2.3.2 3.3-3.3.5-1.8 2.7L12 21.6l-3.1 1.4-1.8-2.7-3.3-.5.2-3.3-2.4-2.3 2-2.6-.8-3.2 3-1.4 1.2-3.1 3.3.4L12 1.8z"/>
-          <path fill="#000" d="M10.6 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.2-4.2 1.4 1.4-5.6 5.6z"/>
+          <path fill="#fff" d="M10.6 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.2-4.2 1.4 1.4-5.6 5.6z"/>
         </svg>
       </h1>
       <div class="uid" id="uid">uid: 1</div>
@@ -76,10 +78,38 @@
 
       <div class="badges" id="badges"></div>
 
-      <a class="playlist" id="playlist" href="https://open.spotify.com/playlist/3fHogffLyJuA23QfNfzYrF" target="_blank" rel="noopener">
-        <div class="playlist__art">
-          <svg viewBox="0 0 24 24" width="24" height="24"><path fill="#1db954" d="M12 2a10 10 0 100 20 10 10 0 000-20zm4.6 14.4a.6.6 0 01-.8.2c-2.3-1.4-5.1-1.7-8.5-.9a.6.6 0 11-.3-1.2c3.7-.9 6.9-.5 9.4 1.1.3.2.4.6.2.8zm1.2-2.7a.8.8 0 01-1 .3c-2.6-1.6-6.5-2-9.5-1.1a.8.8 0 11-.5-1.5c3.4-1 7.7-.6 10.7 1.2.3.2.4.7.3 1.1zm.1-2.9C14.7 8.9 9.3 8.7 6 9.7a1 1 0 11-.6-1.9c3.8-1.1 9.7-.9 13.5 1.3a1 1 0 01-1 1.7z"/></svg>
+      <div class="faceit" id="faceitWidget">
+        <div class="faceit__head">
+          <span class="faceit__brand">
+            <svg viewBox="0 0 24 24" width="15" height="15"><path fill="currentColor" d="M23.999 2.705a.167.167 0 00-.312-.1 1141.27 1141.27 0 00-6.053 9.375H.218c-.221 0-.301.282-.11.352 7.227 2.73 17.667 6.836 23.5 9.134.15.06.39-.08.39-.18z"/></svg>
+            faceit • cs2
+          </span>
+          <span class="faceit__live"><i></i>live</span>
         </div>
+        <div class="faceit__body">
+          <div class="faceit__lvlbadge" title="FACEIT level">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <defs><linearGradient id="lvlgrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5500"/><stop offset="1" stop-color="#FFB800"/></linearGradient></defs>
+              <circle cx="32" cy="32" r="28" fill="rgba(255,85,0,.08)" stroke="rgba(255,255,255,.08)" stroke-width="4"/>
+              <circle id="faceitRing" cx="32" cy="32" r="28" fill="none" stroke="url(#lvlgrad)" stroke-width="4" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9" style="transition:stroke-dashoffset 1.2s cubic-bezier(.2,.8,.2,1)"/>
+            </svg>
+            <span id="faceitLvl">10</span>
+          </div>
+          <div class="faceit__num">
+            <span class="faceit__elo" id="faceitElo">…</span>
+            <span class="faceit__lbl">elo rating</span>
+          </div>
+          <div class="faceit__max">
+            <b id="faceitMax">—</b>
+            <span>max elo</span>
+          </div>
+        </div>
+        <div class="faceit__bar" hidden><i id="faceitFill"></i></div>
+        <div class="faceit__foot"><span id="faceitNick">-flooow</span><span id="faceitUpd">updating…</span></div>
+      </div>
+
+      <a class="playlist" id="playlist" href="https://open.spotify.com/playlist/1AZZzHV2rp5ua18Te5XjdV" target="_blank" rel="noopener">
+        <img class="playlist__cover" id="playlistArt" src="https://image-cdn-fa.spotifycdn.com/image/ab67706c0000da84c8540c503444c5aa17f1f3a1" alt="Обложка плейлиста" width="52" height="52" />
         <div class="playlist__info">
           <div class="playlist__title">Spotify playlist</div>
           <div class="playlist__name" id="playlistName">Мой плейлист</div>
@@ -94,7 +124,7 @@
         <div class="embed__bar">
           <span>сейчас играет</span>
           <span class="embed__actions">
-            <a id="playlistExt" href="https://open.spotify.com/playlist/3fHogffLyJuA23QfNfzYrF" target="_blank" rel="noopener">открыть в Spotify</a>
+            <a id="playlistExt" href="https://open.spotify.com/playlist/1AZZzHV2rp5ua18Te5XjdV" target="_blank" rel="noopener">открыть в Spotify</a>
             <button id="embedHide" type="button">скрыть</button>
           </span>
         </div>
@@ -109,7 +139,7 @@
 
       <footer class="footer" id="footer"></footer>
     </section>
-    <p class="made">made by <b>flow</b> — black theme</p>
+    <p class="made">made by <b>flow</b></p>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>

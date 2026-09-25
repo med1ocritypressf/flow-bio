@@ -35,8 +35,10 @@ function initProfile(){
   $("bio").textContent = BIO.bio || "";
   $("footer").textContent = BIO.footer || "";
   // Плейлист
-  if ($("playlistName")) $("playlistName").textContent = BIO.playlistName || "Мой плейлист";
+  if ($("playlistName")) $("playlistName").textContent = BIO.playlistName || "flow music";
   if ($("playlistMeta")) $("playlistMeta").textContent = BIO.playlistMeta || "";
+  var pArt = $("playlistArt");
+  if (pArt && BIO.playlistArt){ pArt.src = BIO.playlistArt; }
   var pl = $("playlist");
   if (pl && BIO.playlistUrl){ pl.href = BIO.playlistUrl; }
   var fb = $("avatarFallback");
@@ -121,44 +123,151 @@ function initTyped(){
     setTimeout(tick, del ? 28 : 62);
   })();
 }
-/* ---------- ПРОСМОТРЫ ---------- */
-function initViews(){
-  var key = "bio_views", v = parseInt(localStorage.getItem(key) || "0", 10);
-  if (!v) v = (BIO.baseViews || 1000) + Math.floor(Math.random() * 60);
-  v++; localStorage.setItem(key, v);
-  var target = v, cur = Math.max(0, target - 40), el = $("views");
-  var h = setInterval(function(){
-    cur += Math.ceil((target - cur) / 6) || 1;
-    if (cur >= target){ cur = target; clearInterval(h); }
-    el.textContent = cur.toLocaleString("ru-RU");
-  }, 40);
+/* ---------- FACEIT LIVE ELO ---------- */
+function initFaceit(){
+  var eloEl = $("faceitElo"),
+      fill = $("faceitFill"),
+      nickEl = $("faceitNick"), updEl = $("faceitUpd");
+  if (!eloEl) return;
+  var nick = BIO.faceitNick || "-flooow";
+  if (nickEl) nickEl.textContent = nick;
+  var lvlEl = $("faceitLvl"), ring = $("faceitRing"), maxEl = $("faceitMax");
+  if (maxEl) maxEl.textContent = BIO.faceitMaxElo || "—";
+  function lvlRange(lvl, elo){
+    // Границы elo по уровням FACEIT CS2 (приблизительные)
+    var floors = {1:100,2:751,3:901,4:1051,5:1201,6:1351,7:1531,8:1751,9:1951,10:2001};
+    var ceil = {1:750,2:900,3:1050,4:1200,5:1350,6:1530,7:1750,8:1950,9:2000,10:3000};
+    var f = floors[lvl] || 0, c = ceil[lvl] || 3000;
+    return Math.min(1, Math.max(0, (elo - f) / Math.max(1, c - f)));
+  }
+  function animateNum(from, to){
+    var t0 = null, dur = 900;
+    from = from || 0;
+    function step(t){
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / dur);
+      var e = 1 - Math.pow(1 - p, 3);
+      eloEl.textContent = Math.round(from + (to - from) * e);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function paint(elo, lvl, silent){
+    var prev = parseInt(eloEl.textContent, 10);
+    if (isNaN(prev)){ eloEl.textContent = elo; }
+    else if (!silent){ animateNum(prev, elo); }
+    else { eloEl.textContent = elo; }
+    var frac = lvlRange(lvl, elo);
+    if (fill) fill.style.width = (frac * 100).toFixed(1) + "%";
+    if (lvlEl) lvlEl.textContent = lvl || 10;
+    // ring fills in steps of level (1..10), circumference 2π·28
+    if (ring) ring.style.strokeDashoffset = (175.9 * (1 - Math.min(10, lvl || 10) / 10)).toFixed(1);
+    if (updEl) updEl.textContent = "updated " + new Date().toLocaleTimeString("ru-RU", {hour:"2-digit",minute:"2-digit"});
+    try { localStorage.setItem("bio_faceit", JSON.stringify({elo: elo, lvl: lvl})); } catch(e){}
+  }
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem("bio_faceit") || "null"); } catch(e){}
+  if (cached && cached.elo){ paint(cached.elo, cached.lvl || 10, true); }
+  else { paint(2078, 10, true); } // дефолт чтобы не висело «…»
+  var url = "https://www.faceit.com/api/users/v1/nicknames/" + encodeURIComponent(nick);
+  var proxies = [
+    "https://api.allorigins.win/raw?url=" + encodeURIComponent(url),
+    "https://api.allorigins.win/get?url=" + encodeURIComponent(url),
+    "https://corsproxy.io/?url=" + encodeURIComponent(url)
+  ];
+  function fetchLive(){
+    (function tryFetch(i){
+      if (i >= proxies.length) return;
+      fetch(proxies[i])
+        .then(function(r){ if (!r.ok) throw 0; return r.json(); })
+        .then(function(d){
+          // allorigins /get оборачивает ответ в {contents: "..."}
+          var data = d;
+          if (typeof d.contents === "string"){
+            try { data = JSON.parse(d.contents); } catch(e){ throw 0; }
+          }
+          var cs = data && data.payload && data.payload.games && data.payload.games.cs2;
+          if (!cs || !cs.faceit_elo) throw 0;
+          paint(cs.faceit_elo, cs.skill_level, false);
+        })
+        .catch(function(){ tryFetch(i + 1); });
+    })(0);
+  }
+  fetchLive();
+  setInterval(fetchLive, 5 * 60 * 1000); // обновление каждые 5 минут
 }
-/* ---------- ЗВЁЗДЫ ---------- */
+/* ---------- СЧЁТЧИК УНИКАЛЬНЫХ ПОСЕТИТЕЛЕЙ ---------- */
+function initViews(){
+  var el = $("views");
+  function paint(n){ el.textContent = Number(n || 0).toLocaleString("ru-RU"); }
+  // countapi: глобальный счётчик + локальный флаг уникальности
+  var NS = "flow-bio", KEY = "visitors";
+  var seen = null;
+  try { seen = localStorage.getItem("bio_seen"); } catch(e){}
+  var url = seen
+    ? "https://api.countapi.xyz/get/" + NS + "/" + KEY
+    : "https://api.countapi.xyz/hit/" + NS + "/" + KEY;
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && typeof d.value === "number"){
+        paint(d.value);
+        try { localStorage.setItem("bio_seen", "1"); } catch(e){}
+      } else throw 0;
+    })
+    .catch(function(){
+      // Fallback: локальный счётчик если API недоступен
+      var key = "bio_views", v = parseInt(localStorage.getItem(key) || "0", 10);
+      if (!v) v = (BIO.baseViews || 1000);
+      if (!seen){ v++; try { localStorage.setItem(key, v); localStorage.setItem("bio_seen", "1"); } catch(e){} }
+      paint(v);
+    });
+}
+/* ---------- ЗВЁЗДЫ (облегчено для мобильных) ---------- */
 function initStars(){
   var c = $("stars"), ctx = c.getContext("2d"), stars = [];
+  var isMobile = matchMedia("(pointer:coarse)").matches;
+  var COUNT = isMobile ? 50 : 130;
+  var dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1 : 2);
   function resize(){
-    c.width = innerWidth; c.height = innerHeight;
-    stars = Array.from({length: Math.min(160, innerWidth / 8)}, function(){
-      return { x: Math.random()*c.width, y: Math.random()*c.height, r: Math.random()*1.4+.3, s: Math.random()*.35+.05, o: Math.random()*.7+.15 };
-    });
+    c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+    c.style.width = innerWidth + "px"; c.style.height = innerHeight + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    stars = [];
+    for (var i = 0; i < COUNT; i++){
+      stars.push({ x: Math.random()*innerWidth, y: Math.random()*innerHeight, r: Math.random()*1.2+.3, s: Math.random()*.3+.05, o: Math.random()*.6+.15, ph: Math.random()*6.28 });
+    }
   }
-  resize(); addEventListener("resize", resize);
-  (function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
-    stars.forEach(function(s){
-      s.y -= s.s; if (s.y < 0) s.y = c.height;
-      ctx.globalAlpha = s.o * (0.6 + 0.4 * Math.sin(Date.now()/900 + s.x));
-      ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 7); ctx.fill();
-    });
-    ctx.globalAlpha = 1;
+  resize();
+  var rT = null;
+  addEventListener("resize", function(){ clearTimeout(rT); rT = setTimeout(resize, 200); });
+  var running = true;
+  document.addEventListener("visibilitychange", function(){ running = !document.hidden; if (running) draw(); });
+  var last = 0;
+  function draw(now){
+    if (!running) return;
     requestAnimationFrame(draw);
-  })();
+    if (now - last < (isMobile ? 66 : 33)) return; // 15fps mobile / 30fps desktop
+    last = now;
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    var t = now / 900;
+    ctx.fillStyle = "#fff";
+    for (var i = 0; i < stars.length; i++){
+      var s = stars[i];
+      s.y -= s.s; if (s.y < 0) s.y = innerHeight;
+      ctx.globalAlpha = s.o * (0.7 + 0.3 * Math.sin(t + s.ph));
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, 6.3); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  requestAnimationFrame(draw);
 }
 /* ---------- ВХОД ---------- */
 function initEnter(){
   var enter = $("enter"), started = false;
   enter.addEventListener("click", function(){
     enter.classList.add("is-hidden");
+    document.body.classList.add("is-entered");
     if (!started){
       started = true;
       toast("Добро пожаловать");
@@ -182,6 +291,28 @@ function initTilt(){
   // при наведении на внутренние элементы. Оставляем карточку статичной.
   if (card) card.style.transform = "";
 }
+/* ---------- ПОДСВЕТКА ПОД КУРСОРОМ ---------- */
+function initSpotlight(){
+  if (matchMedia("(pointer:coarse)").matches) return;
+  var glow = $("cursorGlow"), x = 0, y = 0, raf = 0;
+  document.addEventListener("pointermove", function(e){
+    x = e.clientX; y = e.clientY;
+    if (glow) glow.classList.add("is-on");
+    var el = e.target.closest && e.target.closest(".link, .faceit");
+    var card = $("card");
+    [card, el].forEach(function(n){
+      if (!n) return;
+      var r = n.getBoundingClientRect();
+      n.style.setProperty("--mx", (x - r.left) + "px");
+      n.style.setProperty("--my", (y - r.top) + "px");
+    });
+    if (!raf) raf = requestAnimationFrame(function(){
+      raf = 0;
+      if (glow) glow.style.transform = "translate(" + x + "px," + y + "px)";
+    });
+  }, {passive: true});
+  document.addEventListener("pointerleave", function(){ if (glow) glow.classList.remove("is-on"); });
+}
 /* ---------- ПЛЕЙЛИСТ: открыть/скрыть (iframe грузится один раз) ---------- */
 function initPlayer(){
   var pl = $("playlist"), frame = $("spotifyFrame"), wrap = $("embedWrap"),
@@ -202,6 +333,9 @@ function initPlayer(){
   if (pl && frame && wrap){
     var cleanUrl = (BIO.playlistUrl || pl.href || "").split("?")[0];
     var loaded = false;
+    frame.addEventListener("error", function(){
+      toast("Плейлист приватный — открой в Spotify по ссылке ниже");
+    });
     pl.addEventListener("click", function(e){
       if (wrap.hidden){
         e.preventDefault();
@@ -232,7 +366,7 @@ function initPlayer(){
   var bg = $("bgMusic");
   if (bg){ bg.removeAttribute("src"); if (bg.load) bg.load(); }
 }
-initProfile(); initLinks(); initTyped(); initViews();
-initStars(); initEnter(); initShare(); initTilt(); initPlayer();
+initProfile(); initLinks(); initTyped(); initViews(); initFaceit();
+initStars(); initEnter(); initShare(); initTilt(); initPlayer(); initSpotlight();
 })();
 
